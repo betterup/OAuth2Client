@@ -30,11 +30,7 @@
 {
     self = [self init];
     if (self) {
-#if __DARWIN_UNIX03
-        srandom((unsigned) time(NULL));
-#else
-        srandom((unsigned long) time(NULL));
-#endif
+        srandom((int)time(NULL));
         boundary = [[NSString alloc] initWithFormat:@"------------nx-oauth2%d", rand()];
         numBytesTotal = 0;
         streamIndex = 0;
@@ -92,7 +88,7 @@
             NSData *delimiterData = [delimiter dataUsingEncoding:NSUTF8StringEncoding];
             NSData *contentHeaderData = [[part contentHeaders] dataUsingEncoding:NSUTF8StringEncoding];
             
-            NSUInteger dataLength = delimiterData.length + contentHeaderData.length;
+            int dataLength = (int)delimiterData.length + (int)contentHeaderData.length;
             NSMutableData *headerData = [NSMutableData dataWithCapacity: dataLength];
             [headerData appendData:delimiterData];
             [headerData appendData:contentHeaderData];
@@ -150,13 +146,13 @@
     if (currentStream == nil)
         return 0;
     
-    NSInteger result = [currentStream read:buffer maxLength:len];
+    int result = (int)[currentStream read:buffer maxLength:len];
     
     if (result == 0) {
         if (streamIndex < contentStreams.count - 1) {
             streamIndex++;
             currentStream = [contentStreams objectAtIndex:streamIndex];
-            result = [self read:buffer maxLength:len];
+            result = (int)[self read:buffer maxLength:len];
         } else {
             currentStream = nil;
         }

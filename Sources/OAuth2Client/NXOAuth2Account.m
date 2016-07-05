@@ -49,7 +49,6 @@ NSString * const NXOAuth2AccountDidFailToGetAccessTokenNotification = @"NXOAuth2
                                 accountType:anAccountType];
     if (self) {
         oauthClient = anOAuthClient;
-        oauthClient.delegate = self;
     }
     return self;
 }

@@ -373,12 +373,8 @@ NSString * const kNXOAuth2AccountStoreAccountType = @"kNXOAuth2AccountStoreAccou
 
 
 #pragma mark Handle OAuth Redirects
-- (BOOL)handleRedirectURL:(NSURL *)aURL
-{
-    return [self handleRedirectURL:aURL error:nil];
-}
 
-- (BOOL)handleRedirectURL:(NSURL *)aURL error: (NSError**) error
+- (BOOL)handleRedirectURL:(NSURL *)aURL;
 {
     __block NSURL *fixedRedirectURL = nil;
     NSSet *accountTypes;
@@ -391,7 +387,15 @@ NSString * const kNXOAuth2AccountStoreAccountType = @"kNXOAuth2AccountStoreAccou
 
                 // WORKAROUND: The URL which is passed to this method may be lower case also the scheme is registered in camel case. Therefor replace the prefix with the stored redirectURL.
                 if (fixedRedirectURL == nil) {
-                    fixedRedirectURL = [self fixRedirectURL: aURL storedURL:redirectURL];
+                    if ([aURL.scheme isEqualToString:redirectURL.scheme]) {
+                        fixedRedirectURL = aURL;
+                    } else {
+                        NSRange prefixRange;
+                        prefixRange.location = 0;
+                        prefixRange.length = [redirectURL.absoluteString length];
+                        fixedRedirectURL = [NSURL URLWithString:[aURL.absoluteString stringByReplacingCharactersInRange:prefixRange
+                                                                                                             withString:redirectURL.absoluteString]];
+                    }
                 }
 
                 return YES;
@@ -403,28 +407,13 @@ NSString * const kNXOAuth2AccountStoreAccountType = @"kNXOAuth2AccountStoreAccou
 
     for (NSString *accountType in accountTypes) {
         NXOAuth2Client *client = [self pendingOAuthClientForAccountType:accountType];
-        if ([client openRedirectURL:fixedRedirectURL error:error]) {
+        if ([client openRedirectURL:fixedRedirectURL]) {
             return YES;
         }
     }
     return NO;
 }
 
--(NSURL*) fixRedirectURL: (NSURL*) incomingURL storedURL: (NSURL*) redirectURL
-{
-    NSURL *fixedRedirectURL;
-    if ([incomingURL.scheme isEqualToString:redirectURL.scheme]) {
-        fixedRedirectURL = incomingURL;
-    } else {
-        NSRange prefixRange;
-        prefixRange.location = 0;
-        prefixRange.length = [redirectURL.absoluteString length];
-        fixedRedirectURL = [NSURL URLWithString:[incomingURL.absoluteString
-             stringByReplacingCharactersInRange:prefixRange
-                                     withString:redirectURL.absoluteString]];
-    }
-    return fixedRedirectURL;
-}
 
 #pragma mark OAuthClient to AccountType Relation
 
@@ -557,15 +546,9 @@ NSString * const kNXOAuth2AccountStoreAccountType = @"kNXOAuth2AccountStoreAccou
         }
     }
     
-    if (foundAccount) {
-        foundAccount.accessToken = client.accessToken;
-        NSDictionary *userInfo = [NSDictionary dictionaryWithObject: foundAccount
-                                                             forKey: NXOAuth2AccountStoreNewAccountUserInfoKey];
-        
-        [[NSNotificationCenter defaultCenter] postNotificationName:NXOAuth2AccountStoreAccountsDidChangeNotification
-                                                            object:self
-                                                          userInfo:userInfo];
-    }
+    foundAccount.accessToken = client.accessToken;
+    [[NSNotificationCenter defaultCenter] postNotificationName:NXOAuth2AccountDidChangeAccessTokenNotification
+                                                        object:self];
 }
 
 - (void)addAccount:(NXOAuth2Account *)account;
@@ -719,6 +702,7 @@ NSString * const kNXOAuth2AccountStoreAccountType = @"kNXOAuth2AccountStoreAccou
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:accounts];
     NSMutableDictionary *query = [NSMutableDictionary dictionaryWithObjectsAndKeys:
                                   (__bridge NSString *)kSecClassGenericPassword, kSecClass,
+                                  kSecAttrAccessibleAfterFirstUnlock, kSecAttrAccessible,
                                   serviceName, kSecAttrService,
                                   @"OAuth 2 Account Store", kSecAttrLabel,
                                   data, kSecAttrGeneric,

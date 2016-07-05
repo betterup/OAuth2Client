@@ -57,11 +57,7 @@ extern NSString * const NXOAuth2ClientConnectionContextTokenRefresh;
     NSInteger        refreshConnectionDidRetryCount;
     
     // delegates
-#if __has_feature(objc_arc_weak)
-    NSObject<NXOAuth2ClientDelegate>*    __weak delegate;
-#else
     NSObject<NXOAuth2ClientDelegate>*    __unsafe_unretained delegate;    // assigned
-#endif
 }
 
 @property (nonatomic, readonly, getter = isAuthenticating) BOOL authenticating;
@@ -78,14 +74,8 @@ extern NSString * const NXOAuth2ClientConnectionContextTokenRefresh;
 @property (nonatomic, copy) NSString *acceptType; // defaults to application/json
 
 @property (nonatomic, strong) NXOAuth2AccessToken    *accessToken;
+@property (nonatomic, unsafe_unretained) NSObject<NXOAuth2ClientDelegate>*    delegate;
 
-#if __has_feature(objc_arc_weak)
-    @property (nonatomic, weak) NSObject<NXOAuth2ClientDelegate>*    delegate;
-#else
-    @property (nonatomic, unsafe_unretained) NSObject<NXOAuth2ClientDelegate>*    delegate;
-#endif
-
-@property (nonatomic, readonly) NXOAuth2Connection *authConnection;
 
 /*!
  * If set to NO, the access token is not stored any keychain, will be removed if it was.
@@ -124,7 +114,6 @@ extern NSString * const NXOAuth2ClientConnectionContextTokenRefresh;
                         delegate:(NSObject<NXOAuth2ClientDelegate> *)delegate;
 
 - (BOOL)openRedirectURL:(NSURL *)URL;
-- (BOOL)openRedirectURL:(NSURL *)URL error: (NSError**) error;
 
 
 #pragma mark Authorisation Methods
@@ -154,7 +143,6 @@ extern NSString * const NXOAuth2ClientConnectionContextTokenRefresh;
 #pragma mark Public
 
 - (void)requestAccess;
-- (void)requestAccessAndRetryConnection:(NXOAuth2Connection *)retryConnection;
 
 - (void)refreshAccessToken;
 - (void)refreshAccessTokenAndRetryConnection:(NXOAuth2Connection *)retryConnection;

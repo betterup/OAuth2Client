@@ -26,6 +26,4 @@
 - (NSURL *)nxoauth2_URLWithoutQueryString;
 - (NSString *)nxoauth2_URLStringWithoutQueryString;
 
-- (NSError*) nxoauth2_redirectURLError;
-
 @end

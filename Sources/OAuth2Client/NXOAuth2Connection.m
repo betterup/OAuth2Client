@@ -158,7 +158,7 @@ sendingProgressHandler:(NXOAuth2ConnectionSendingProgressHandler)aSendingProgres
 - (NSURLConnection *)createConnection;
 {
     // if the request is a token refresh request don't sign it and don't check for the expiration of the token (we know that already)
-    NSString *oauthAuthorizationHeader = request.allHTTPHeaderFields[@"Authorization"];
+    NSString *oauthAuthorizationHeader = nil;
     if (client.accessToken &&
         ![[requestParameters objectForKey:@"grant_type"] isEqualToString:@"refresh_token"]) {
         
@@ -415,18 +415,12 @@ sendingProgressHandler:(NXOAuth2ConnectionSendingProgressHandler)aSendingProgres
             }
         }
     }
-
     if (self.statusCode == 401
         && client.accessToken.refreshToken != nil
         && authenticateHeader
-        && ([authenticateHeader rangeOfString:@"invalid_token"].location != NSNotFound || 
-            [authenticateHeader rangeOfString:@"expired_token"].location != NSNotFound ))
-    {
+        && ([authenticateHeader rangeOfString:@"invalid_token"].location != NSNotFound || [authenticateHeader rangeOfString:@"invalid_request"].location != NSNotFound)) {
         [self cancel];
         [client refreshAccessTokenAndRetryConnection:self];
-    } else if (client.authConnection != self && authenticateHeader && client) {
-        [self cancel];
-        [client requestAccessAndRetryConnection:self];
     } else {
         if ([delegate respondsToSelector:@selector(oauthConnection:didReceiveData:)]) {
             [delegate oauthConnection:self didReceiveData:data];    // inform the delegate that we start with empty data
@@ -474,15 +468,9 @@ sendingProgressHandler:(NXOAuth2ConnectionSendingProgressHandler)aSendingProgres
                     }
                 }
             }
-            if (authenticateHeader && ([authenticateHeader rangeOfString:@"invalid_token"].location != NSNotFound || [authenticateHeader rangeOfString:@"invalid_grant"].location != NSNotFound)) {
-                // Try to refresh the token if possible, otherwise remove this account.
-                if (client.accessToken.refreshToken) {
-                    [self cancel];
-                    [client refreshAccessTokenAndRetryConnection:self];
-                    return;
-                } else {
-                    client.accessToken = nil;
-                }
+            if (authenticateHeader
+                && ([authenticateHeader rangeOfString:@"invalid_token"].location != NSNotFound || [authenticateHeader rangeOfString:@"invalid_request"].location != NSNotFound)) {
+                client.accessToken = nil;
             }
         }
         

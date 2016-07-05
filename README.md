@@ -28,7 +28,7 @@ In order to install the library this way add the following line to your `Podfile
 
 and run the following command `pod install`.
 
-*Note:* CocoaPods is now the preferred way to integrate NXOAuth2Client into Xcode
+*Note:* CocoaPods is now the preferred way to integrate NXOAuth2Client into XCode
 
 ### Manually including the library in your Xcode project
 
@@ -109,12 +109,7 @@ Once you have configured your client you are ready to request access to one of t
  [[NXOAuth2AccountStore sharedStore] requestAccessToAccountWithType:@"myFancyService"];
  </pre>
   
- If you are using an external browser, your application needs to handle the URL you have registered as an redirect URL for the account type (e.g. a custom URL scheme like `myfancyscheme://oauth`). The service will redirect to that URL after the authentication process.
- 
- In `-[AppDelegate application: openURL: sourceApplication: annotation:]` pass the redirect URL to
- <pre>
-     [[NXOAuth2AccountStore sharedStore] handleRedirectURL: url];
- </pre>
+ If you are using an external browser, your application needs to handle the URL you have registered as an redirect URL for the account type. The service will redirect to that URL after the authentication process.
 
 - Provide an Authorization URL Handler
  <pre>
@@ -133,7 +128,7 @@ Once you have configured your client you are ready to request access to one of t
  [_webView loadRequest:[NSURLRequest requestWithURL:preparedURL]];
  </pre>
  
-  2) In the `webViewDidFinishLoad:` delegate method, you will need to parse the URL for your callback URL.  If there is a match, pass that URL to `-[NXOAuth2AccountStore handleRedirectURL:]`
+  2) In the `webViewDidFinishLoad:` delegate method, you will need to parse the URL for your callback URL.  If there is a match, pass that URL to `handleRedirectURL:`
 
  <pre>
  if ([webView.request.URL.absoluteString rangeOfString:kOAuth2RedirectURL options:NSCaseInsensitiveSearch].location != NSNotFound) {
@@ -141,7 +136,7 @@ Once you have configured your client you are ready to request access to one of t
     }
 </pre>   
 
-This is a very basic example.  In the above, it is assumed that the `code` being returned from the OAuth2 provider is in the query parameter of the webView.request.URL (i.e. `http://myredirecturl.com?code=<verylongcodestring>`).  This is not always the case and you may have to look elsewhere for the code (e.g. in the page content, web page title).  You must prepare a URL in the format described above to pass to `-[NXOAuth2AccountStore handleRedirectURL:]`.
+This is a very basic example.  In the above, it is assumed that the `code` being returned from the OAuth2 provider is in the query parameter of the webView.request.URL (i.e. `http://myredirecturl.com?code=<verylongcodestring>`).  This is not always the case and you may have to look elsewhere for the code (e.g. in the page content, web page title).  You must prepare a URL in the format described above to pass to `handleRedirectURL:`.
 
 #### On Success
 
